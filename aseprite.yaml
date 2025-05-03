@@ -10,6 +10,10 @@ finish-args:
   - --share=ipc
   - --device=dri
   - --filesystem=home
+cleanup:
+  - /include
+  - '*.a'
+  - /share/man
 modules:
   - name: aseprite
     buildsystem: cmake-ninja
