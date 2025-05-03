@@ -1,0 +1,39 @@
+app-id: xyz.ketok.Aseprite
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm20
+command: aseprite
+finish-args:
+  - --socket=x11
+  - --share=ipc
+  - --device=dri
+  - --filesystem=home
+modules:
+  - name: aseprite
+    buildsystem: cmake-ninja
+    builddir: true
+    build-options:
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      prepend-path: /usr/lib/sdk/llvm20/bin
+      env:
+        CC: clang
+        CXX: clang++
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DCMAKE_CXX_FLAGS:STRING=-stdlib=libstdc++
+      - -DCMAKE_EXE_LINKER_FLAGS:STRING=-stdlib=libstdc++
+      - -DLAF_BACKEND=skia
+      - -DSKIA_DIR=/run/build/aseprite/skia
+      - -DSKIA_LIBRARY_DIR=/run/build/aseprite/skia/out/Release-x64
+      - -DSKIA_LIBRARY=/run/build/aseprite/skia/out/Release-x64/libskia.a
+    sources:
+      - type: git
+        url: https://github.com/aseprite/aseprite
+        tag: v1.3.13
+      - type: archive
+        url: https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libstdc++.zip
+        sha256: f233026f8bbe8d31ed99afa8128c75c9b649dff41987a0cc1f0fda2e72258048
+        dest: skia
+        strip-components: 0 # https://github.com/flatpak/flatpak-builder/issues/35
