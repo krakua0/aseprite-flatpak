@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Aseprite
+Comment=Animated Sprite Editor & Pixel Art Tool
+Exec=aseprite %f
+Icon=org.krakua0.Aseprite
+Terminal=false
+Type=Application
+Categories=Graphics;2DGraphics;
+StartupWMClass=Aseprite

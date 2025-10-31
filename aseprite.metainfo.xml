@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>org.krakua0.Aseprite</id>
+  <name>Aseprite</name>
+  <summary>Animated sprite editor &amp; pixel art tool</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary-Aseprite AND GPL-2.0-or-later</project_license>
+  <url type="homepage">https://www.aseprite.org/</url>
+  <url type="bugtracker">https://github.com/aseprite/aseprite/issues</url>
+  <developer_name>Igara Studio S.A.</developer_name>
+  <description>
+    <p>Aseprite is a program to create 2D animations and pixel art.</p>
+  </description>
+  <provides>
+    <binary>aseprite</binary>
+  </provides>
+  <custom>
+    <value key="x-flathub::manifest-key">aseprite</value>
+  </custom>
+  <categories>
+    <category>Graphics</category>
+    <category>2DGraphics</category> <category>Development</category>
+  </categories>
+  <launchable type="desktop-id">org.krakua0.Aseprite.desktop</launchable>
+</component>

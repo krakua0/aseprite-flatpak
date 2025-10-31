@@ -1,4 +1,6 @@
-app-id: xyz.ketok.Aseprite
+app-id: org.krakua0.Aseprite
+# rename-icon: ase256.png
+# rename-desktop-file: aseprite.desktop
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
@@ -7,13 +9,34 @@ sdk-extensions:
 command: aseprite
 finish-args:
   - --socket=x11
+  - --socket=wayland
+  - --socket=fallback-x11
   - --share=ipc
   - --device=dri
   - --filesystem=home
 cleanup:
   - /include
+  - /lib/pkgconfig
+  - /bin/mdb*
   - '*.a'
-  - /share/man
+  - /libexec
+  - /lib/cmake
+  - /bin/cmark
+  - /bin/event_rpcgen.py
+  - /bin/playout
+  - /bin/secret-tool
+  - /bin/gst-*
+  - /share/gdb
+  - /share/gst*
+  - /lib/girepository-1.0/
+  - /lib/gst-validate-launcher/
+  - /lib/gstreamer-1.0/include
+  - /lib/gstreamer-1.0/include/
+  - /lib/gstreamer-1.0/libgstcoreelements.so
+  - /lib/gstreamer-1.0/libgstopengl*
+  - /lib/gstreamer-1.0/libgstximagesink.so
+  - /lib/gstreamer-1.0/validate/
+  - /lib/libgst*
 modules:
   - name: aseprite
     buildsystem: cmake-ninja
@@ -41,3 +64,61 @@ modules:
         sha256: f233026f8bbe8d31ed99afa8128c75c9b649dff41987a0cc1f0fda2e72258048
         dest: skia
         strip-components: 0 # https://github.com/flatpak/flatpak-builder/issues/35
+      - type: file
+        path: aseprite.metainfo.xml
+      - type: file
+        path: aseprite.desktop
+      # - type: file # can be: `archive`, `bzr`, `file`, `git`, `hg`, `oci`, `script`, `tar`, `zip`, sometimes `dir` (discouraged)
+      #   path:      # relative to manifest file (i.e. this file)
+      # - path: scr
+      #   type: dir
+        # skip:
+        #   - ignored_path
+    # build-commands:
+    post-install:
+      # Debugging: Necessary because flatpak-builder is underdocumented
+      - echo "FLATPAK_BUILDER_BUILDDIR - ${FLATPAK_BUILDER_BUILDDIR}"
+      - echo "FLATPAK_ID - ${FLATPAK_ID}"
+      - echo "FLATPAK_ID - ${FLATPAK_ID}"
+      - pwd      # Will show /run/build/aseprite/_flatpak_build
+      - echo "=========== /run/build/aseprite/_flatpak_build ==========="
+      - ls -1 .  # Will list files in /run/build/aseprite/_flatpak_build
+      - echo "=========== /run/build/aseprite ==========="
+      - ls -1 .. # Will list files in /run/build/aseprite
+      # - find ../.. -name "filename"
+      # - install -vDm644 ../data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+      - install -vDm644 ${FLATPAK_BUILDER_BUILDDIR}/data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+      # - install -vDm644 ../data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+      # - install -Dm644 ../aseprite.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      # - install -Dm644 ../aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      # - mkdir -p ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/
+      # # - cp ../scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots
+      # - cp ${FLATPAK_BUILDER_BUILDDIR}/scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/
+
+# 
+# Explainer of the build system:
+# 
+# There are env vars exposed to context of [post-install] & [build-commands]
+# + FLATPAK_ID   - ID if this flatpak
+# + FLATPAK_ARCH - Architecture
+# + FLATPAK_DEST - Directory where final flatpak files will be located
+# 
+# ```
+# /run/build/                    # 
+#  ├── aseprite/                 # same as FLATPAK_BUILDER_BUILDDIR
+#  │   ├── data/                 # 
+#  │   │   └── icons/            # 
+#  │   │       └── ase256.png    # 
+#  │   ├── scr1                  # 
+#  │   ├── scr2                  # 
+#  │   ├── scr3                  # 
+#  │   ├── scr4                  # 
+#  │   ├── aseprite.metainfo.xml # 
+#  │   ├── aseprite.desktop      # 
+#  │   └── _flatpak_build/       # [post-install] & [build-commands] run here
+#  └── skia/                     # 
+# ```
+# 
+

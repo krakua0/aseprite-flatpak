@@ -1,1 +1,10 @@
-.flatpak-builder/
+.flatpak-builder
+build
+repo
+*.bak
+*.flatpak
+*.flatpak.bak
+*.flatpak.*
+.examples
+.examples/*
+
