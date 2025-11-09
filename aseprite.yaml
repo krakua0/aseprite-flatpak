@@ -96,6 +96,7 @@ modules:
         #   - ignored_path
     # build-commands:
     post-install:
+      # Can be most `coreutils` shell CLI commands (e.g. `find`, `ls`, `install0`, `cp`, `mkdir`, etc.)
       # Debugging: Necessary because flatpak-builder is underdocumented
       - echo "FLATPAK_BUILDER_BUILDDIR - ${FLATPAK_BUILDER_BUILDDIR}"
       - echo "FLATPAK_ID - ${FLATPAK_ID}"

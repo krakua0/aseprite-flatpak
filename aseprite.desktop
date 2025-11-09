@@ -13,4 +13,4 @@ Exec=aseprite
 Terminal=false
 StartupNotify=true
 StartupWMClass=aseprite
-MimeType=image/bmp;image/gif;image/jpeg;image/png;image/x-pcx;image/x-tga;image/vnd.microsoft.icon;video/x-flic;image/webp;image/x-aseprite;
+MimeType=image/bmp;image/gif;image/jpeg;image/png;image/x-pcx;image/x-tga;image/vnd.microsoft.icon;video/x-flic;image/webp;image/x-aseprite;application/octet-stream;
