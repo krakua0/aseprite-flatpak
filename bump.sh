@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# bump.sh — fetch latest aseprite/skia/runtime versions, update manifest + metainfo + README + build.sh
+# bump.sh — resolve latest aseprite/skia/runtime versions, then delegate
+# file edits to bump_edit.py (all regexps live there)
 #
 # Usage:
 #   ./bump.sh                # bump to latest aseprite release + matching skia + latest flathub runtime
@@ -12,15 +13,13 @@
 # (e.g. aseprite-m124), then finds the matching skia release tag (m124-<sha>).
 
 set -euo pipefail
+cd "$(dirname "$(readlink -f "$0")")" # run from repo dir regardless of caller cwd
 
 MANIFEST="aseprite.yaml"
-METAINFO="aseprite.metainfo.xml"
-README="README.md"
 ASE_REPO="aseprite/aseprite"
 SKIA_REPO="aseprite/skia"
 RUNTIME="org.freedesktop.Platform"
 RUNTIME_FALLBACK="25.08"
-LLVM_EXT="org.freedesktop.Sdk.Extension.llvm20"
 SKIA_ASSET="Skia-Linux-Release-x64.zip"
 
 die() {
@@ -38,7 +37,7 @@ for a in "$@"; do
 	--check | -n) CHECK=1 ;;
 	--skia-only) SKIA_ONLY=1 ;;
 	--help | -h)
-		sed -n '2,12p' "$0"
+		sed -n '2,13p' "$0"
 		exit 0
 		;;
 	v[0-9]*) ASE_TAG_OVERRIDE="$a" ;;
@@ -61,7 +60,6 @@ else
 	ASE_TAG=$(api "https://api.github.com/repos/$ASE_REPO/releases/latest" | jq -r '.tag_name')
 	[[ "$ASE_TAG" != "null" && -n "$ASE_TAG" ]] || die "failed to fetch latest aseprite release"
 fi
-ASE_VER="${ASE_TAG#v}"
 
 # commit sha for tag
 ASE_COMMIT=$(api "https://api.github.com/repos/$ASE_REPO/git/refs/tags/$ASE_TAG" | jq -r '.object.sha')
@@ -111,43 +109,12 @@ if [[ $CHECK -eq 1 ]]; then
 	exit 0
 fi
 
-# --- helpers for in-place edits ---
-pyedit() {
-	python3 - "$@" <<'PY'
-import re, sys
-f = sys.argv[1]
-edits = sys.argv[2:]   # pairs of (regex, repl)
-s = open(f).read()
-for i in range(0, len(edits), 2):
-    pat, rep = edits[i], edits[i+1]
-    s = re.sub(pat, rep, s, count=1, flags=re.MULTILINE)
-open(f, "w").write(s)
-PY
-}
-
-if [[ $SKIA_ONLY -eq 0 ]]; then
-	# runtime-version
-	pyedit "$MANIFEST" \
-		"runtime-version: '[0-9.]+'" "runtime-version: '$RUNTIME_VER'"
-	# aseprite git source: tag + commit (group 2 captures indentation for the commit line)
-	pyedit "$MANIFEST" \
-		"(url: https://github\\.com/aseprite/aseprite\n(\\s+)tag: )v[0-9.]+(?:\n\\2commit: [0-9a-f]+)?" \
-		"\\g<1>$ASE_TAG\n\\2commit: $ASE_COMMIT"
-	# metainfo release line
-	pyedit "$METAINFO" \
-		'<release version="[0-9.]+" date="[0-9-]+"' \
-		"<release version=\"$ASE_VER\" date=\"$ASE_DATE\""
-	# README version mention
-	pyedit "$README" \
-		'Aseprite version: v[0-9.]+' "Aseprite version: $ASE_TAG"
-	# build.sh reads runtime version from the manifest at runtime, so no edit needed here
+# --- edits (regex table lives in bump_edit.py) ---
+if [[ $SKIA_ONLY -eq 1 ]]; then
+	python3 bump_edit.py --skia-only --skia-url "$SKIA_URL" --skia-sha "$SKIA_SHA"
+else
+	python3 bump_edit.py --skia-url "$SKIA_URL" --skia-sha "$SKIA_SHA" \
+		--runtime "$RUNTIME_VER" --ase-tag "$ASE_TAG" --ase-commit "$ASE_COMMIT" --date "$ASE_DATE"
 fi
-
-# skia archive url + sha (always — even in --skia-only mode)
-pyedit "$MANIFEST" \
-	'url: https://github\.com/aseprite/skia/releases/download/m[0-9]+-[0-9a-f]+/Skia-Linux-Release-x64(?:-libstdc\+\+)?\.zip' \
-	"url: $SKIA_URL"
-pyedit "$MANIFEST" \
-	'^(\s*)sha256: [0-9a-f]{64}' "\1sha256: $SKIA_SHA"
 
 echo "bumped -> $ASE_TAG ($SKIA_TAG), runtime $RUNTIME_VER"

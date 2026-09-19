@@ -11,4 +11,4 @@ repo
 # build artifacts renamed to app-id during install
 /org.krakua0.Aseprite.desktop
 /org.krakua0.Aseprite.metainfo.xml
-
+__pycache__
