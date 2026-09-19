@@ -1,5 +1,6 @@
 .flatpak-builder
 build
+builddir
 repo
 *.bak
 *.flatpak
@@ -7,4 +8,7 @@ repo
 *.flatpak.*
 .examples
 .examples/*
+# build artifacts renamed to app-id during install
+/org.krakua0.Aseprite.desktop
+/org.krakua0.Aseprite.metainfo.xml
 

@@ -7,7 +7,7 @@ A manifest to build `aseprite` as a `flatpak` with a proper `.desktop` launcher 
 > + Uses prebuilt skia binaries.
 
 > [!IMPORTANT]
-> Aseprite version: v1.3.13
+> Aseprite version: v1.3.18.1
 
 # Requirements
 
@@ -15,25 +15,36 @@ A manifest to build `aseprite` as a `flatpak` with a proper `.desktop` launcher 
 
 ```
 git
-flatpak-builder
+flatpak          # org.flatpak.Builder installed by flatpak.build.deps
 ```
 
 ## Flatpak
 
 ```
-org.freedesktop.Sdk.Extension.llvm20/x86_64/24.08
+org.freedesktop.Sdk.Extension.llvm20/x86_64/<runtime-version in manifest>
 ```
 
 # Build
 
 ```bash
-#!/usr/bin/env bash
 source build.sh
-flatpak.build.deps
-flatpak.build.clean aseprite.yaml
-flatpak.bundle
+flatpak.build.deps        # installs org.flatpak.Builder + runtime/sdk/llvm20 to --user
+flatpak.build.clean       # wipes builddir/ repo/ then builds + installs aseprite.yaml
+flatpak.bundle            # bundles repo/ (exported by builder) -> org.krakua0.Aseprite.flatpak
 flatpak install ./org.krakua0.Aseprite.flatpak
-# or just `flatpak-builder --force-clean --system --install-deps-from=flathub --install aseprite.yaml`
+```
+
+# Version bump
+
+`./bump.sh` fetches the latest aseprite release + matching skia prebuilt (branch
+read from that release's `INSTALL.md`) + latest flathub runtime, then rewrites
+`aseprite.yaml`, `aseprite.metainfo.xml`, and this README in place.
+
+```bash
+./bump.sh                 # bump to latest aseprite release
+./bump.sh --check         # dry-run: print resolved values, edit nothing
+./bump.sh v1.3.18.1       # pin to a specific tag
+./bump.sh --skia-only     # re-fetch skia asset for the currently-pinned tag
 ```
 
 # Plans

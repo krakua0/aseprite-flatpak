@@ -11,6 +11,13 @@
   <description>
     <p>Aseprite is a program to create 2D animations and pixel art.</p>
   </description>
+  <screenshots>
+    <!-- TODO: replace with hosted screenshot URLs before Flathub submission -->
+    <screenshot type="default">
+      <caption>Aseprite editor window</caption>
+      <image>https://raw.githubusercontent.com/aseprite/aseprite/main/docs/images/aseprite-1.png</image>
+    </screenshot>
+  </screenshots>
   <provides>
     <binary>aseprite</binary>
   </provides>
@@ -22,4 +29,7 @@
     <category>2DGraphics</category> <category>Development</category>
   </categories>
   <launchable type="desktop-id">org.krakua0.Aseprite.desktop</launchable>
+  <releases>
+    <release version="1.3.18.1" date="2026-07-23"/>
+  </releases>
 </component>

@@ -11,7 +11,7 @@ app-id: org.krakua0.Aseprite
 # rename-desktop-file: aseprite.desktop
 # rename-appinfo-file: aseprite.metainfo.xml
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm20
@@ -20,20 +20,10 @@ finish-args:
   - --socket=x11
   #- --socket=wayland # As of 2025, Aseprite still doesn't support Wayland: https://github.com/aseprite/aseprite/issues/3448
   #- --socket=fallback-x11
-  - --share=network
+  - --share=network # update check + crash reporter
   - --share=ipc
   - --device=dri
-  - --filesystem=home
-  - --filesystem=/media
-  - --filesystem=/run/media
-  - --filesystem=/mnt
-  - --filesystem=xdg-desktop
-  - --filesystem=xdg-pictures
-  - --filesystem=xdg-videos
-  - --filesystem=xdg-music
-  - --filesystem=xdg-download
-  - --filesystem=xdg-documents
-  - --filesystem=xdg-public-share
+  - --filesystem=home # covers all xdg-* subsets; see sandbox audit
 cleanup:
   - /include
   - /lib/pkgconfig
@@ -41,22 +31,8 @@ cleanup:
   - '*.a'
   - /libexec
   - /lib/cmake
-  - /bin/cmark
-  - /bin/event_rpcgen.py
-  - /bin/playout
-  - /bin/secret-tool
-  - /bin/gst-*
   - /share/gdb
-  - /share/gst*
   - /lib/girepository-1.0/
-  - /lib/gst-validate-launcher/
-  - /lib/gstreamer-1.0/include
-  - /lib/gstreamer-1.0/include/
-  - /lib/gstreamer-1.0/libgstcoreelements.so
-  - /lib/gstreamer-1.0/libgstopengl*
-  - /lib/gstreamer-1.0/libgstximagesink.so
-  - /lib/gstreamer-1.0/validate/
-  - /lib/libgst*
 modules:
   - name: aseprite
     buildsystem: cmake-ninja
@@ -78,16 +54,19 @@ modules:
     sources:
       - type: git
         url: https://github.com/aseprite/aseprite
-        tag: v1.3.13
+        tag: v1.3.18.1
+        commit: 35c35e645f68b6a2d39808c9e7b193d3144f100d
       - type: archive
-        url: https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libstdc++.zip
-        sha256: f233026f8bbe8d31ed99afa8128c75c9b649dff41987a0cc1f0fda2e72258048
+        url: https://github.com/aseprite/skia/releases/download/m124-08a5439a6b/Skia-Linux-Release-x64.zip
+        sha256: a327e89b244f24cecaa34eb37544bae00d447b96c583d26ed29d6a3ad2e8a8b8
         dest: skia
         strip-components: 0 # https://github.com/flatpak/flatpak-builder/issues/35
       - type: file
         path: aseprite.metainfo.xml
       - type: file
         path: aseprite.desktop
+      - type: file
+        path: org.krakua0.Aseprite.xml
       # - type: file # can be: `archive`, `bzr`, `file`, `git`, `hg`, `oci`, `script`, `tar`, `zip`, sometimes `dir` (discouraged)
       #   path:      # relative to manifest file (i.e. this file)
       # - path: scr
@@ -99,7 +78,6 @@ modules:
       # Can be most `coreutils` shell CLI commands (e.g. `find`, `ls`, `install0`, `cp`, `mkdir`, etc.)
       # Debugging: Necessary because flatpak-builder is underdocumented
       - echo "FLATPAK_BUILDER_BUILDDIR - ${FLATPAK_BUILDER_BUILDDIR}"
-      - echo "FLATPAK_ID - ${FLATPAK_ID}"
       - echo "FLATPAK_ID - ${FLATPAK_ID}"
       - pwd      # Will show /run/build/aseprite/_flatpak_build
       - echo "=========== /run/build/aseprite/_flatpak_build ==========="
@@ -114,6 +92,7 @@ modules:
       - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       # - install -Dm644 ../aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
       - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/org.krakua0.Aseprite.xml ${FLATPAK_DEST}/share/mime/packages/${FLATPAK_ID}.xml
       # - mkdir -p ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/
       # # - cp ../scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots
       # - cp ${FLATPAK_BUILDER_BUILDDIR}/scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/

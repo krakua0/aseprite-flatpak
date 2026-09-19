@@ -1,6 +1,5 @@
 [Desktop Entry]
 Type=Application
-Encoding=UTF-8
 Name=Aseprite
 GenericName=Sprite Editor
 Comment=Animated Sprite Editor & Pixel Art Tool
@@ -9,8 +8,8 @@ Comment[ru]=Инструмент для 2D-анимации и пиксель-а
 Icon=org.krakua0.Aseprite
 Categories=Graphics;2DGraphics;RasterGraphics;
 PrefersNonDefaultGPU=true
-Exec=aseprite
+Exec=aseprite %F
 Terminal=false
 StartupNotify=true
 StartupWMClass=aseprite
-MimeType=image/bmp;image/gif;image/jpeg;image/png;image/x-pcx;image/x-tga;image/vnd.microsoft.icon;video/x-flic;image/webp;image/x-aseprite;application/octet-stream;
+MimeType=image/bmp;image/gif;image/jpeg;image/png;image/x-pcx;image/x-tga;image/vnd.microsoft.icon;video/x-flic;image/webp;image/x-aseprite;
