@@ -105,13 +105,7 @@ echo "skia sha:  $SKIA_SHA"
 echo "runtime:   $RUNTIME_VER"
 
 if [[ $CHECK -eq 1 ]]; then
-	echo "(--check: no edits)"
-	exit 0
-fi
-
-# --- edits (regex table lives in bump_edit.py) ---
-if [[ $SKIA_ONLY -eq 1 ]]; then
-	python3 bump_edit.py --skia-only --skia-url "$SKIA_URL" --skia-sha "$SKIA_SHA"
+	python3 bump_edit.py --skia-only --skia-url "$SKIA_URL" --skia-sha "$SKIA_SHA" --dry-run
 else
 	python3 bump_edit.py --skia-url "$SKIA_URL" --skia-sha "$SKIA_SHA" \
 		--runtime "$RUNTIME_VER" --ase-tag "$ASE_TAG" --ase-commit "$ASE_COMMIT" --date "$ASE_DATE"

@@ -8,10 +8,13 @@ Conventions:
   - replacement templates use {value} placeholders (filled from CLI args)
     and \\g<group> named-group backrefs — never \\1-style numbered groups;
   - a pattern that matches nothing aborts the run, so a drifted file
-    never produces a silent no-op.
+    never produces a silent no-op;
+  - `--dry-run` validates every pattern and prints a unified diff
+    without touching any file.
 """
 
 import argparse
+import difflib
 import re
 import sys
 from pathlib import Path
@@ -74,6 +77,11 @@ EDITS = {
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="validate every pattern and print a diff, edit nothing",
+    )
     ap.add_argument("--skia-url", required=True)
     ap.add_argument("--skia-sha", required=True)
     ap.add_argument("--runtime", help="runtime version, e.g. 25.08")
@@ -105,16 +113,51 @@ def main() -> None:
         names = list(EDITS)
 
     base = Path(__file__).resolve().parent
+    # file_key -> current text (edits applied sequentially, in-place in memory)
+    current: dict[str, str] = {}
+    failures: list[tuple[str, str, str]] = []
+
     for name in names:
         file_key, pattern, template = EDITS[name]
         path = base / FILES[file_key]
-        new, n = re.subn(pattern, template.format(**values), path.read_text(), count=1)
+        text = current.get(file_key, path.read_text())
+        repl = template.format(**values)
+        new, n = re.subn(pattern, repl, text, count=1)
         if n != 1:
-            sys.exit(
-                f"ERROR: edit '{name}' matched nothing in {path.name}: {pattern!r}"
+            failures.append((name, path.name, pattern))
+            current[file_key] = text  # keep baseline so later diffs are stable
+            continue
+        current[file_key] = new
+
+    if failures:
+        for name, fname, pattern in failures:
+            sys.stderr.write(
+                f"ERROR: edit '{name}' matched nothing in {fname}: {pattern!r}\n"
             )
-        path.write_text(new)
-        print(f"  {path.name}: {name}")
+        sys.exit(1)
+
+    if args.dry_run:
+        for file_key in dict.fromkeys(EDITS[name][0] for name in names):
+            if file_key not in current:
+                continue
+            orig = (base / FILES[file_key]).read_text()
+            updated = current[file_key]
+            if orig == updated:
+                continue
+            path = base / FILES[file_key]
+            diff = difflib.unified_diff(
+                orig.splitlines(keepends=True),
+                updated.splitlines(keepends=True),
+                fromfile=f"a/{path.name}",
+                tofile=f"b/{path.name}",
+            )
+            print(f"diff -- {path.name}")
+            sys.stdout.writelines(diff)
+        sys.exit(0)
+
+    for file_key in current:
+        (base / FILES[file_key]).write_text(current[file_key])
+        print(f"  {FILES[file_key]}: applied")
 
 
 if __name__ == "__main__":

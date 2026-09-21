@@ -3,8 +3,9 @@
 A manifest to build `aseprite` as a `flatpak` with a proper `.desktop` launcher icon.
 
 > [!WARNING]
-> + Only works for `x86_64`
-> + Uses prebuilt skia binaries.
+>
+> - Only works for `x86_64`
+> - Uses prebuilt skia binaries.
 
 > [!IMPORTANT]
 > Aseprite version: v1.3.18.1
@@ -34,11 +35,21 @@ flatpak.bundle            # bundles repo/ (exported by builder) -> org.krakua0.A
 flatpak install ./org.krakua0.Aseprite.flatpak
 ```
 
+# Usage
+
+Useful paths:
+
+```
+~/.var/app/org.krakua0.Aseprite   # Flatpak app files prefix
+└── /config                       # Flatpak app config prefix
+    └── /aseprite                 # Aseprite. Similar to `~/.config/aseprite`
+        ├── /extensions           # Extensions. Usually `.lua`
+        └── /scripts              # Scripts. Usually `.lua`
+```
+
 # Version bump
 
-`./bump.sh` fetches the latest aseprite release + matching skia prebuilt (branch
-read from that release's `INSTALL.md`) + latest flathub runtime, then rewrites
-`aseprite.yaml`, `aseprite.metainfo.xml`, and this README in place.
+`./bump.sh` fetches the latest aseprite release + matching skia prebuilt (branch read from that release's `INSTALL.md`) + latest flathub runtime, then rewrites `aseprite.yaml`, `aseprite.metainfo.xml`, and this README in place.
 
 ```bash
 ./bump.sh                 # bump to latest aseprite release
@@ -49,13 +60,14 @@ read from that release's `INSTALL.md`) + latest flathub runtime, then rewrites
 
 # Plans
 
-+ [ ] Better templating for `flatpak-builder` manifest and scripts
-	+ [ ] `.env` files with reusable values
-+ [ ] Option to build from
-	+ [ ] latest stable release version of `aseprite`
-	+ [ ] sources
-	+ [ ] remote pre-built binaries
-+ [ ] `i18n`
-	+ [ ] More languages in `.desktop`
-	+ [ ] Build script messages
-+ [ ] Script to push bundle into a local `flatpak` repo for home-labbers and self-hosters?
+- [ ] Better templating for `flatpak-builder` manifest and scripts
+  - [ ] `.env` files with reusable values
+- [ ] Option to build from
+  - [ ] latest stable release version of `aseprite`
+  - [ ] sources
+  - [ ] remote pre-built binaries
+- [ ] `i18n`
+  - [ ] More languages in `.desktop`
+  - [ ] Build script messages
+- [ ] Script to push bundle into a local `flatpak` repo for home-labbers and self-hosters?
+- [ ] Change version bumper to `just`, `task[file]` or `celery`
