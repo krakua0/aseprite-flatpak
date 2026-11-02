@@ -1,25 +1,16 @@
-# Relevant docs:
-# https://docs.flatpak.org/en/latest/first-build.html
-# https://docs.flatpak.org/en/latest/manifests.html
-# https://docs.flatpak.org/en/latest/module-sources.html
-# https://docs.flatpak.org/en/latest/sandbox-permissions.html
-# https://docs.flatpak.org/en/latest/flatpak-builder.html
-# https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html
-
 app-id: org.krakua0.Aseprite
-# rename-icon: ase256.png
-# rename-desktop-file: aseprite.desktop
-# rename-appinfo-file: aseprite.metainfo.xml
 runtime: org.freedesktop.Platform
-runtime-version: '25.08'
+runtime-version: "25.08"
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm20
 command: aseprite
 finish-args:
   - --socket=x11
-  #- --socket=wayland # As of 2025, Aseprite still doesn't support Wayland: https://github.com/aseprite/aseprite/issues/3448
+  #- --socket=wayland
   #- --socket=fallback-x11
+  # Aseprite has no Wayland support as of 2025:
+  # https://github.com/aseprite/aseprite/issues/3448
   - --share=network # update check + crash reporter
   - --share=ipc
   - --device=dri
@@ -28,10 +19,12 @@ cleanup:
   - /include
   - /lib/pkgconfig
   - /bin/mdb*
-  - '*.a'
+  - "*.a"
   - /libexec
   - /lib/cmake
   - /share/gdb
+  - /share/man
+  - /lib/debug
   - /lib/girepository-1.0/
 modules:
   - name: aseprite
@@ -60,62 +53,31 @@ modules:
         url: https://github.com/aseprite/skia/releases/download/m124-08a5439a6b/Skia-Linux-Release-x64.zip
         sha256: a327e89b244f24cecaa34eb37544bae00d447b96c583d26ed29d6a3ad2e8a8b8
         dest: skia
-        strip-components: 0 # https://github.com/flatpak/flatpak-builder/issues/35
+        strip-components: 0
+        # flatpak-builder unpacks archives with the top dir intact:
+        # https://github.com/flatpak/flatpak-builder/issues/35
       - type: file
         path: aseprite.metainfo.xml
       - type: file
         path: aseprite.desktop
       - type: file
-        path: org.krakua0.Aseprite.xml
-      # - type: file # can be: `archive`, `bzr`, `file`, `git`, `hg`, `oci`, `script`, `tar`, `zip`, sometimes `dir` (discouraged)
-      #   path:      # relative to manifest file (i.e. this file)
-      # - path: scr
-      #   type: dir
-        # skip:
-        #   - ignored_path
-    # build-commands:
+        path: aseprite.mime.xml
+    # post-install / build-commands run in _flatpak_build (builddir: true).
+    # Env there: FLATPAK_ID (app-id), FLATPAK_DEST (=/app), FLATPAK_ARCH.
+    # Sandbox layout at that point:
+    #   /run/build/aseprite/ = FLATPAK_BUILDER_BUILDDIR
+    #   +-- data/icons/ase256.png        from the aseprite git source
+    #   +-- skia/                        from the archive source (dest: skia)
+    #   +-- aseprite.desktop / .metainfo.xml / .mime.xml  (type: file)
+    #   +-- _flatpak_build/              cmake-ninja build dir (cwd)
     post-install:
-      # Can be most `coreutils` shell CLI commands (e.g. `find`, `ls`, `install0`, `cp`, `mkdir`, etc.)
-      # Debugging: Necessary because flatpak-builder is underdocumented
-      - echo "FLATPAK_BUILDER_BUILDDIR - ${FLATPAK_BUILDER_BUILDDIR}"
-      - echo "FLATPAK_ID - ${FLATPAK_ID}"
-      - pwd      # Will show /run/build/aseprite/_flatpak_build
-      - echo "=========== /run/build/aseprite/_flatpak_build ==========="
-      - ls -1 .  # Will list files in /run/build/aseprite/_flatpak_build
-      - echo "=========== /run/build/aseprite ==========="
-      - ls -1 .. # Will list files in /run/build/aseprite, i.e. FLATPAK_BUILDER_BUILDDIR
-      # - find ../.. -name "filename"
-      # - install -vDm644 ../data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
-      - install -vDm644 ${FLATPAK_BUILDER_BUILDDIR}/data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
-      # - install -vDm644 ../data/icons/ase256.png ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
-      # - install -Dm644 ../aseprite.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
-      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
-      # - install -Dm644 ../aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/org.krakua0.Aseprite.xml ${FLATPAK_DEST}/share/mime/packages/${FLATPAK_ID}.xml
-      # - mkdir -p ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/
-      # # - cp ../scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots
-      # - cp ${FLATPAK_BUILDER_BUILDDIR}/scr*.png ${FLATPAK_DEST}/share/${FLATPAK_ID}/screenshots/
-
-# 
-# Explainer of the build system:
-# 
-# There are env vars exposed to context of [post-install] & [build-commands]
-# + FLATPAK_ID   - ID if this flatpak
-# + FLATPAK_ARCH - Architecture
-# + FLATPAK_DEST - Directory where final flatpak files will be located
-# 
-# ```
-# /run/build/                    # 
-#  └── aseprite/                 # same as FLATPAK_BUILDER_BUILDDIR
-#      ├── data/                 # 
-#      │   └── icons/            # 
-#      │       └── ase256.png    # 
-#      ├── aseprite.metainfo.xml # 
-#      ├── aseprite.desktop      # 
-#      ├── skia/                 # 
-#      ├── [any other source]    # 
-#      └── _flatpak_build/       # generated by `buildsystem: cmake-ninja` with `builddir: true`. In this case, [post-install] & [build-commands] run here.
-# ```
-# 
-
+      # one shell script: each install is wrapped with \ to keep lines readable
+      - |
+        install -vDm644 ${FLATPAK_BUILDER_BUILDDIR}/data/icons/ase256.png \
+          ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+        install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.desktop \
+          ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+        install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.metainfo.xml \
+          ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+        install -Dm644 ${FLATPAK_BUILDER_BUILDDIR}/aseprite.mime.xml \
+          ${FLATPAK_DEST}/share/mime/packages/${FLATPAK_ID}.xml

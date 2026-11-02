@@ -21,9 +21,6 @@
   <provides>
     <binary>aseprite</binary>
   </provides>
-  <custom>
-    <value key="x-flathub::manifest-key">aseprite</value>
-  </custom>
   <categories>
     <category>Graphics</category>
     <category>2DGraphics</category> <category>Development</category>

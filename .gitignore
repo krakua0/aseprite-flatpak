@@ -1,14 +1,9 @@
-.flatpak-builder
-build
-builddir
-repo
-*.bak
+# flatpak build output
+.flatpak-builder/
+builddir/
+repo/
 *.flatpak
-*.flatpak.bak
-*.flatpak.*
-.examples
-.examples/*
-# build artifacts renamed to app-id during install
-/org.krakua0.Aseprite.desktop
-/org.krakua0.Aseprite.metainfo.xml
-__pycache__
+
+# tool caches
+__pycache__/
+.ruff_cache/

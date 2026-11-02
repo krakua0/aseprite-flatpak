@@ -22,7 +22,6 @@ from pathlib import Path
 FILES = {
     "manifest": "aseprite.yaml",
     "metainfo": "aseprite.metainfo.xml",
-    "readme": "README.md",
 }
 
 # reusable regexp fragments
@@ -53,12 +52,6 @@ EDITS = {
         "metainfo",
         r'<release version="' + VER + r'" date="' + DATE + r'"',
         '<release version="{ase_version}" date="{date}"',
-    ),
-    # README: version note in the header quote block
-    "readme-version": (
-        "readme",
-        r"Aseprite version: " + V,
-        "Aseprite version: {ase_tag}",
     ),
     # manifest: skia archive URL (-libstdc++ asset variant tolerated)
     "skia-url": (
@@ -155,8 +148,8 @@ def main() -> None:
             sys.stdout.writelines(diff)
         sys.exit(0)
 
-    for file_key in current:
-        (base / FILES[file_key]).write_text(current[file_key])
+    for file_key, text in current.items():
+        (base / FILES[file_key]).write_text(text)
         print(f"  {FILES[file_key]}: applied")
 
 
