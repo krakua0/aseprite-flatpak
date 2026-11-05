@@ -32,11 +32,14 @@ SHA256 = r"[0-9a-f]{64}"  # archive hash
 DATE = r"[0-9]{4}-[0-9]{2}-[0-9]{2}"  # release date, YYYY-MM-DD
 
 EDITS = {
-    # manifest: freedesktop runtime pin
+    # manifest: freedesktop runtime pin.
+    # Quote-agnostic: flatpak-manifest tools rewrite '25.08' as "25.08".
+    # (?P=q) captures the opening quote and (?P=q) requires the same one, so
+    # the file keeps whichever style it already uses.
     "runtime-version": (
         "manifest",
-        r"runtime-version: '" + VER + r"'",
-        "runtime-version: '{runtime}'",
+        r"runtime-version: (?P<q>[\"'])" + VER + r"(?P=q)",
+        r"runtime-version: \g<q>{runtime}\g<q>",
     ),
     # manifest: aseprite git source — tag line, plus commit line right below
     # (commit is optional in the pattern so it gets added if ever missing;
@@ -130,6 +133,7 @@ def main() -> None:
         sys.exit(1)
 
     if args.dry_run:
+        changed = False
         for file_key in dict.fromkeys(EDITS[name][0] for name in names):
             if file_key not in current:
                 continue
@@ -146,6 +150,9 @@ def main() -> None:
             )
             print(f"diff -- {path.name}")
             sys.stdout.writelines(diff)
+            changed = True
+        if not changed:
+            print("no changes: every pinned value already matches upstream")
         sys.exit(0)
 
     for file_key, text in current.items():

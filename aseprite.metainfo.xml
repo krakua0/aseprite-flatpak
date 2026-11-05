@@ -27,6 +27,6 @@
   </categories>
   <launchable type="desktop-id">org.krakua0.Aseprite.desktop</launchable>
   <releases>
-    <release version="1.3.18.1" date="2026-07-23"/>
+    <release version="1.3.18.6" date="2026-09-22"/>
   </releases>
 </component>

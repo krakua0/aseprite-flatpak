@@ -1,0 +1,101 @@
+= Code trimming plan (DX)
+
+Goal: make the four scripts readable by a human in one pass, without reducing
+coverage. Verbosity here is not feature size — it is duplicated readers,
+two-process plumbing, and comments that restate code.
+
+== Current size
+
+| file | lines | comment | blank | code |
+|---|---|---|---|---|
+| `test.sh` | 277 | 45 | 27 | 205 |
+| `bump.sh` | 165 | 38 | 20 | 107 |
+| `bump_edit.py` | 164 | 13 + 13 docstring | — | 134 |
+| `build.sh` | 63 | 15 | 6 | 42 |
+| `aseprite.yaml` | 83 | 15 | — | 68 |
+
+Reading cost is worse than the line count: the same five manifest fields
+(`tag`, `commit`, `runtime-version`, skia `url`, skia `sha256`) are parsed four
+different ways — `grep` in `build.sh`, `grep` in `bump.sh`, `yq` in `test.sh`,
+`re` in `bump_edit.py`. That duplication is the class of bug fixed on
+2026-11-05 (quote style drifted in one reader only).
+
+== P1 — one manifest reader
+
+* Add `manifest.py` with `get <field>` for the five scalar fields, `app-id`, and
+  the `sdk-extensions` list. Patterns live only there.
+* Replace in `build.sh`, `bump.sh`, `test.sh`: every `grep -E '^runtime-version:'`,
+  `grep -oE 'tag: v…'`, `yqr '.modules[0].sources[0].tag'`.
+* Keep `yq` in `test.sh` for structural checks only (`sources[]` iteration,
+  `cleanup[]` membership) — scalar reads move to `manifest.py`.
+* `bump_edit.py` imports the reader instead of re-declaring `V`/`VER`/`SHA1`/`SHA256` fragments.
+* Cost: no new dependency (`python3` is already required by the bumper).
+* Expected: `-40` lines, 4 pattern copies -> 1, one quoting convention.
+
+== P2 — remove the bump.sh -> bump_edit.py process boundary
+
+* `bump.sh` exists to fetch values; `bump_edit.py` exists to apply them. The
+  contract between them is 6 CLI flags that duplicate the `EDITS` placeholder
+  names, plus a `--dry-run` path that had to be repaired by hand.
+* Merge into one Python file: GitHub calls via `urllib.request` (stdlib),
+  `sha256` via `hashlib`, flathub branch discovery via `subprocess` on `flatpak`.
+* Keep the shell entry point as `bump.sh` -> `exec python3 bump.py "$@"` so
+  `README.md`, `test.sh` and muscle memory stay valid.
+* `--check` / `--skia-only` become edit-set selection in one place: the edit set
+  is derived from which values were requested, not from two parallel `if/else`
+  blocks in two files.
+* Expected: `-60` lines, 1 file instead of 2, no flag/table duplication.
+
+== P3 — comments: keep "why", drop "what"
+
+* Move out of the scripts and into docs (they are reference material, not code):
+  * `aseprite.yaml` sandbox-layout block and the `post-install` layout note ->
+    `doc/feat/flatpak/build-layout/README.adoc`;
+  * the `flatpak.run --command=flathub-build` wrapper explanation in `build.sh` ->
+    `doc/dev/std/flatpak/builder/README.adoc`;
+  * the STE-format flathub column layout note stays in code (it prevents a real
+    regression), one line max.
+* Budget: comments <= 15 lines per script, <= 2 lines per "why" note.
+* Expected: `aseprite.yaml` 83 -> ~66, `bump.sh` comments 38 -> <= 12.
+
+== P4 — test.sh check bodies
+
+* `shall`/`nn` pass strings to `eval`, so each check has two quoting layers;
+  that is where the `yq '.x[] // empty'` and the unquoted `flatpak remote-ls`
+  failures hid while still reporting a clean `xfail`.
+* Delete `shall`/`nn`; express each check as a named function invoked as
+  `t "name" check_fn` — the same pattern already used for
+  `runtime_quote_styles()`.
+* Prefer real commands over `bash -c "…"` string bodies; where a pipeline is
+  needed, put it in the function.
+* Drop the duplicated `yqr`/`yqj` helpers once P1 lands.
+* Coverage must not move: `t`/`x` counts stay 36/3.
+
+== P5 — small sharp edges
+
+* `--help` uses `sed -n '2,13p' "$0"` (silent breakage when the header moves) ->
+  print a usage function.
+* Drop the `-n` alias for `--check` and the `-v` alias for `--verbose` in
+  `test.sh`; two spellings of one flag double the grep surface.
+* Single-letter helpers `t`/`x` are kept (used ~40 times, renaming costs more
+  than it gives), but every *check* gets a `check_*` name so findings are greppable.
+
+== Deliberately not doing
+
+* No abstraction over "version bump steps" beyond the single reader — four known
+  fields do not justify a framework.
+* No new runtime dependency (`jq`/`curl` stay; `yq` stays for structural tests only).
+* No line-wrapping in `aseprite.yaml` source URLs: the scalar must stay single-line.
+* No rewrite of `build.sh` function-name style (`flatpak.build.deps` + `export -f`) —
+  the dot-names are the wrapper's calling convention.
+
+== Sequence and gate
+
+. P1 reader — smallest, removes the whole drift class.
+. P2 merge — only after the reader is shared, otherwise the merge moves duplication instead of removing it.
+. P4 test bodies — run against the merged bumper.
+. P3 comment moves — last, docs-only.
+. P5 opportunistic.
+
+Gate per step: `./test.sh --net` reports `pass>=36 fail=0 xfail=3`, `shellcheck -x` and
+`ruff check` clean, `./bump.sh --check` diff empty right after a successful bump.

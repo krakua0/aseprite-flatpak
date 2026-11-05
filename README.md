@@ -23,7 +23,7 @@ flatpak          # org.flatpak.Builder is installed by flatpak.build.deps
 ```text
 git              # resolves tags + commits over https, no GitHub API rate limit
 curl jq sha256sum sed grep python3
-flatpak          # optional: discovers the newest flathub runtime branch
+flatpak          # optional: discovers flathub runtime branches (else 25.08 fallback)
 ```
 
 ### Flatpak
@@ -56,7 +56,9 @@ Useful paths:
 
 ## Version bump
 
-`./bump.sh` fetches the latest aseprite release + matching skia prebuilt (branch read from that release's `INSTALL.md`) + latest flathub runtime, then rewrites `aseprite.yaml` and `aseprite.metainfo.xml` in place.
+`./bump.sh` fetches the latest aseprite release + matching skia prebuilt (branch read from that release's `INSTALL.md`) + newest usable flathub runtime, then rewrites `aseprite.yaml` and `aseprite.metainfo.xml` in place.
+
+The runtime is the newest branch published for `org.freedesktop.Platform` **and** for every `sdk-extensions:` entry in the manifest — `org.freedesktop.Sdk.Extension.llvm20` stops at 25.08, so Platform 26.08 is not usable while the manifest pins llvm20.
 
 ```bash
 ./bump.sh                 # bump to latest aseprite release

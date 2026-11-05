@@ -17,7 +17,7 @@ flatpak.build.deps() {
 	# Pre-install runtime + sdk + llvm20 ext so --install-deps-from=flathub finds them and skips
 	# its own (sandbox-broken) dep install. Version read from manifest (kept in sync by bump.sh).
 	local rt
-	rt=$(grep -m1 -oE "runtime-version: '[0-9.]+'" "$MANIFEST" | grep -oE "[0-9.]+")
+	rt=$(grep -m1 -E '^runtime-version:' "$MANIFEST" | grep -oE '[0-9]{2}\.[0-9]{2}')
 	rt="${rt:-25.08}"
 	flatpak install --user -y --noninteractive flathub \
 		"org.freedesktop.Platform/x86_64/$rt" \

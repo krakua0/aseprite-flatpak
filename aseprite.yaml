@@ -47,8 +47,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/aseprite/aseprite
-        tag: v1.3.18.1
-        commit: 35c35e645f68b6a2d39808c9e7b193d3144f100d
+        tag: v1.3.18.6
+        commit: 331e898ef405d919539c03fd1675691cfa16c3a3
       - type: archive
         url: https://github.com/aseprite/skia/releases/download/m124-08a5439a6b/Skia-Linux-Release-x64.zip
         sha256: a327e89b244f24cecaa34eb37544bae00d447b96c583d26ed29d6a3ad2e8a8b8
